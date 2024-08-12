@@ -1,0 +1,39 @@
+type TaskStatus = 
+ variant {
+   completed;
+   pending;
+ };
+type TaskId = nat32;
+type Task = 
+ record {
+   description: text;
+   id: TaskId;
+   owner: principal;
+   status: TaskStatus;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: vec Task;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: Task;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: text;
+ };
+service : {
+  addTask: (text) -> (Result);
+  addTaskForPrincipal: (text, principal) -> (Result);
+  delTask: (TaskId) -> (Result_1);
+  getAllTasks: () -> (vec Task) query;
+  getMyTasks: () -> (Result_2) query;
+  getTaskById: (TaskId) -> (Result_1) query;
+  getTasksByOwner: (principal) -> (vec Task) query;
+  updateTaskStatus: (TaskId, TaskStatus) -> (Result);
+  whoami: () -> (principal) query;
+}

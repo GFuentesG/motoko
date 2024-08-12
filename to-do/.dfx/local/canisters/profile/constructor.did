@@ -1,0 +1,26 @@
+type Profile = 
+ record {
+   email: text;
+   owner: principal;
+   username: text;
+ };
+type GetProfileResultOk = 
+ record {
+   email: text;
+   owner: principal;
+   username: text;
+ };
+type GetProfileResultErr = 
+ variant {
+   userDoesNotExist;
+   userNotAuthenticated;
+ };
+type GetProfileResult = 
+ variant {
+   err: GetProfileResultErr;
+   ok: GetProfileResultOk;
+ };
+service : {
+  addProfile: (Profile) -> () oneway;
+  getProfile: (text) -> (GetProfileResult) query;
+}

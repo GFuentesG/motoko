@@ -1,0 +1,65 @@
+type TaskStatus = 
+ variant {
+   completed;
+   pending;
+ };
+type TaskId = nat32;
+type Task = 
+ record {
+   description: text;
+   id: TaskId;
+   owner: principal;
+   status: TaskStatus;
+ };
+type Result_3 = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: vec Profile;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: Task;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: vec Task;
+ };
+type Profile = 
+ record {
+   email: text;
+   owner: principal;
+   username: text;
+ };
+type GetProfileResultOk = 
+ record {
+   email: text;
+   owner: principal;
+   username: text;
+ };
+type GetProfileResultErr = 
+ variant {
+   userDoesNotExist;
+   userNotAuthenticated;
+ };
+type GetProfileResult = 
+ variant {
+   err: GetProfileResultErr;
+   ok: GetProfileResultOk;
+ };
+service : {
+  addProfile: (Profile) -> (Result_3);
+  addTaskToProfile: (text, text) -> (Result_3);
+  delProfile: (text) -> (GetProfileResult);
+  getProfile: (text) -> (GetProfileResult) query;
+  getProfiles: () -> (Result_2) query;
+  getTaskDetails: (TaskId) -> (Result_1);
+  listTasksForUser: (text) -> (Result);
+  whoami: () -> (principal) query;
+}
