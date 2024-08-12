@@ -1,0 +1,47 @@
+{
+  "canisters": {
+    "identidad_backend": {
+      "type": "motoko",
+      "main": "src/identidad_backend/main.mo"
+    },
+    "greet": {
+      "type": "motoko",
+      "main": "src/identidad_backend/greet.mo"
+    },
+    "profile": {
+      "type": "motoko",
+      "main": "src/identidad_backend/profile.mo"
+    },
+    "mapmops": {
+      "type": "motoko",
+      "main": "src/identidad_backend/mapmops.mo"
+    },
+    "task": {
+      "type": "motoko",
+      "main": "src/identidad_backend/task.mo"
+    },
+    "princi": {
+      "type": "motoko",
+      "main": "src/identidad_backend/princi.mo"
+    },
+    "internet_identity": {
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      }
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "mops sources"
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
