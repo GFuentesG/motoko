@@ -4,25 +4,9 @@
       "type": "motoko",
       "main": "src/identidad_backend/main.mo"
     },
-    "greet": {
-      "type": "motoko",
-      "main": "src/identidad_backend/greet.mo"
-    },
-    "profile": {
-      "type": "motoko",
-      "main": "src/identidad_backend/profile.mo"
-    },
-    "mapmops": {
-      "type": "motoko",
-      "main": "src/identidad_backend/mapmops.mo"
-    },
     "task": {
       "type": "motoko",
       "main": "src/identidad_backend/task.mo"
-    },
-    "princi": {
-      "type": "motoko",
-      "main": "src/identidad_backend/princi.mo"
     },
     "internet_identity": {
       "type": "custom",

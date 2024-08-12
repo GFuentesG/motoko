@@ -4,15 +4,16 @@ import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
-//import MainActor "canister:mapmops";
 
 actor TaskActor{
 
     stable var taskIdCounter: Nat32 = 0; // contador de tareas
     stable var tasks: [Types.Task] = [];
 
-    //adicionar una tarea por el usuario
+    //adicionar una tarea por el propio usuario
     public shared (msg) func addTask(description: Text): async Result.Result<Text, Text> {
+        if(Principal.isAnonymous(msg.caller)) return #err("User not authenticated");
+
         let caller = msg.caller; 
         return await internalAddTask(description, caller);
     };
@@ -38,17 +39,13 @@ actor TaskActor{
         return #ok("Task added successfully");
     };
 
-    //buscar tareas por id para el administrador
-    // public query func getTaskById(taskId: Types.TaskId): async ?Types.Task {
-    //     return Array.find<Types.Task>(tasks, func (task){ task.id == taskId });
-    // };
-
-
-    // Función para obtener una tarea por ID, considerando permisos
+    //ver el detalle de una tarea por numero de tarea del propio usuario
     public query (msg) func getTaskById(taskId: Types.TaskId): async Result.Result<Types.Task, Text> {
-        let caller = msg.caller;  // Obtenemos el Principal del actor que llama a la función
+        if(Principal.isAnonymous(msg.caller)) return #err("User not authenticated");
 
-        // Buscamos la tarea por su ID
+        let caller = msg.caller;  //obtenemos el usuario que llama a la función
+
+        // Buscamos la tarea por su id
         let maybeTask = Array.find<Types.Task>(tasks, func (task) { task.id == taskId });
 
         switch (maybeTask) {
@@ -56,7 +53,7 @@ actor TaskActor{
                 return #err("Task not found");
 
             case (?task)
-                // Si el solicitante es el propietario de la tarea o un canister (usuario especial)
+                //evaluamos si el solicitante es el propietario de la tarea o un canister (posterior desarrollo)
                 if (task.owner == caller or Principal.isAnonymous(caller)) {
                     return #ok(task);
                 } else {
@@ -65,18 +62,18 @@ actor TaskActor{
         };
     };
 
-
-
-
-
-
-
-
     //listar todas las tareas del propio usuario
-    public query (msg) func getMyTasks(): async [Types.Task] { 
-        let caller = msg.caller; // Obtiene el Principal del usuario
+    public query (msg) func getMyTasks(): async Result.Result<[Types.Task], Text> { 
+        if(Principal.isAnonymous(msg.caller)) return #err("User not authenticated");
+
+        let caller = msg.caller; 
         let userTasks = Array.filter<Types.Task>(tasks, func (task) { task.owner == caller });
-        return userTasks;
+        return #ok(userTasks);
+    };
+
+    //listar todas las tareas para administracion
+    public query func getAllTasks(): async [Types.Task] {
+        return tasks;
     };
 
     //listar todas las tareas por usuario para administracion
@@ -87,99 +84,74 @@ actor TaskActor{
         return userTasks;
     };
 
-    //listar todas las tereas por usuario para administracion, de ser vacio muestra todo
-    public query func getTasks(owner: ?Principal): async [Types.Task] {
-        switch (owner) {
-            case (null) {
-                // Devuelve todas las tareas si el owner es null
-                return tasks;
-            };
-            case (?principal) {
-                // Devuelve las tareas asociadas al principal dado
-                let userTasks = Array.filter<Types.Task>(tasks, func (task) {
-                    task.owner == principal
-                });
-                return userTasks;
-            };
-        };
-    };
-
-
-
-
-
-
-
-
-    public func completeTask(taskId: Types.TaskId): async Result.Result<Text, Text>{
-        let maybeTask = Array.find<Types.Task>(tasks,func (task){task.id == taskId});
-
-        switch(maybeTask){
-            case(null) {return #err("Task not found")};
-            case(?task){
-                let updateTask: Types.Task = {
-                    id = task.id;
-                    description = task.description;
-                    status = #completed;
-                    owner = task.owner;
-                };
-                tasks := Array.map<Types.Task, Types.Task>(tasks, func (t) {
-                    if(t.id == taskId) {
-                        updateTask;
-                    }else{
-                        t;
-                    } 
-                });
-
-                return #ok("Task market as completed");
-            
-            };
-        };
-    };
-
     //cambiar el status de una tarea por el usuario
     public shared (msg) func updateTaskStatus(taskId: Types.TaskId, newStatus: Types.TaskStatus): async Result.Result<Text, Text> {
-        let caller = msg.caller;  //*** Tomamos el principal del usuario logueado
+        if(Principal.isAnonymous(msg.caller)) return #err("User not authenticated");
+        
+        let caller = msg.caller;  //el usuario logueado
 
-        var taskFound: Bool = false;  //*** Flag para indicar si la tarea fue encontrada
+        var taskFound: Bool = false;  //flag para indicar si la tarea fue encontrada
 
-        var updatedTasks: [Types.Task] = [];  //*** Lista para almacenar tareas actualizadas
+        var updatedTasks: [Types.Task] = [];  //lista para almacenar tareas actualizadas
 
-        for (i in Iter.range(0, Array.size(tasks) - 1)) {  //*** Recorremos las tareas por índice
+        for (i in Iter.range(0, Array.size(tasks) - 1)) {  //recorremos las tareas por índice
             let task = tasks[i];
 
-            if (task.id == taskId and task.owner == caller) {  //*** Verificamos ID y propietario
+            if (task.id == taskId and task.owner == caller) {  //verificamos ID y propietario
                 taskFound := true;
 
                 if (task.status == newStatus) {
-                    return #err("Task is already in the requested status");  //*** Si la tarea ya está en el estado solicitado
+                    return #err("Task is already in the requested status");  //si la tarea ya está en el estado solicitado
                 } else {
                     let updatedTask: Types.Task = {
                         id = task.id;
                         description = task.description;
                         owner = task.owner;
-                        status = newStatus;  //*** Actualizamos solo el estado de la tarea
+                        status = newStatus;  //actualizamos solo el estado de la tarea
                     };
-                    updatedTasks := Array.append(updatedTasks, [updatedTask]);  //*** Agregamos la tarea actualizada a la lista
+                    updatedTasks := Array.append(updatedTasks, [updatedTask]);  //agregamos la tarea actualizada a la lista
                 }
             } else {
-                updatedTasks := Array.append(updatedTasks, [task]);  //*** Agregamos tareas no actualizadas a la lista
+                updatedTasks := Array.append(updatedTasks, [task]);  //agregamos las tareas no actualizadas a la lista
             }
         };
 
         if (taskFound) {
-            tasks := updatedTasks;  //*** Actualizamos la lista de tareas con las tareas actualizadas
-            return #ok("Task status updated successfully");  //*** Confirmación de éxito
+            tasks := updatedTasks;  //actualizamos la lista de tareas con las tareas actualizadas
+            return #ok("Task status updated successfully");  
         } else {
             return #err("Task not found or you do not own this task");
         }
-    }
+    };
 
+    //ver nuestro id de usuario
+    public query ({caller}) func whoami(): async Principal { 
+        return caller;
+    };
 
+    //borrar tareas
+    public shared (msg) func delTask(taskId: Types.TaskId) : async Result.Result<Types.Task, Text> {
+        // Verificar si el usuario está autenticado
+        if (Principal.isAnonymous(msg.caller)) return #err("User not authenticated"); //***
 
+        // Buscar la tarea por ID
+        let maybeTask = Array.find<Types.Task>(tasks, func (task) { task.id == taskId });
 
+        switch (maybeTask) {
+            case (null) { 
+                return #err("Task not found");
+            };
+            case (?task) {
+                if (task.owner != msg.caller) {
+                    return #err("You are not the owner of this task"); 
+                };
 
-
+                // Eliminar la tarea de la lista de tareas
+                tasks := Array.filter<Types.Task>(tasks, func (t) { t.id != taskId });
+                return #ok(task); // Devolver la tarea eliminada como confirmación
+            };
+        };
+    };
 
 
 }
