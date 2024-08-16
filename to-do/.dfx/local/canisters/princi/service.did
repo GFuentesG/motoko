@@ -1,4 +1,0 @@
-service : {
-  printPrincipal: (principal) -> (text) query;
-  whoami: () -> (principal) query;
-}

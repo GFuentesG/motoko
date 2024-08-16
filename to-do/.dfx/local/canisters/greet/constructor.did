@@ -1,8 +1,0 @@
-type Result = 
- variant {
-   err: text;
-   ok: text;
- };
-service : {
-  greet: () -> (Result) query;
-}
